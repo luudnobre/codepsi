@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodePsi - Painel do Psicanalista</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+</head>
+<body>
+  <div class="login-screen" id="loginScreen">
+    <h1>CodePsi 🧠</h1>
+    <input type="text" id="username" placeholder="Seu nome ou login">
+    <button onclick="enterApp()">Entrar</button>
+  </div>
+
+  <div class="app hidden" id="app">
+    <header>
+      <h2>Bem-vindo, <span id="userName"></span></h2>
+      <div>
+        <button onclick="toggleTheme()">🌓</button>
+        <button onclick="logout()">Sair</button>
+      </div>
+    </header>
+
+    <section class="dashboard" id="dashboard">
+      <h3>📊 Seu Painel</h3>
+      <div class="stats">
+        <div><strong>👥 Pacientes:</strong> <span id="countPatients">0</span></div>
+        <div><strong>🧾 Sessões:</strong> <span id="countSessions">0</span></div>
+        <div><strong>🏷️ Tags comuns:</strong> <span id="tagList">-</span></div>
+      </div>
+    </section>
+
+    <section class="patients">
+      <h3>Pacientes</h3>
+      <input type="text" id="searchPatient" placeholder="Buscar paciente..." oninput="filterPatients()">
+      <input type="text" id="newPatient" placeholder="Nome do paciente">
+      <button onclick="addPatient()">Adicionar</button>
+      <ul id="patientList"></ul>
+    </section>
+
+    <section class="notes hidden" id="notesSection">
+      <h3 id="selectedPatientName"></h3>
+      <textarea id="notesArea" placeholder="Escreva suas anotações aqui..."></textarea>
+      <input type="text" id="tagsInput" placeholder="Adicionar tags separadas por vírgula (ex: ansiedade, infância)">
+      <input type="date" id="sessionDate">
+      <button onclick="saveNotes()">Salvar Anotações</button>
+      <div id="sessionHistory"></div>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
