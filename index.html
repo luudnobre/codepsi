@@ -1,55 +1,78 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CodePsi - Painel do Psicanalista</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+  <meta charset="UTF-8" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22><text y=%2214%22 font-size=%2214%22>🕵🏼‍♀️</text></svg>">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Psi </title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="login-screen" id="loginScreen">
-    <h1>Set Psicanalista 👻 </h1>
-    <input type="text" id="username" placeholder="Seu nome ou login">
-    <button onclick="enterApp()">Entrar</button>
+  <div id="loginScreen" class="main-container">
+    <div class="content">
+      <h1>Bem-vindo ao Code Psi 🧠</h1>
+      <form id="loginForm">
+        <input type="text" id="username" placeholder="Nome de usuário" required />
+        <input type="password" id="password" placeholder="Senha" required />
+        <button type="submit">Entrar</button>
+      </form>
+    </div>
   </div>
 
-  <div class="app hidden" id="app">
-    <header>
-      <h2>Seja muito bem vindo(a) <span id="userName"></span></h2>
-      <div>
-        <button onclick="toggleTheme()">🌓</button>
-        <button onclick="logout()">Sair</button>
-      </div>
-    </header>
+  <div id="app" class="main-container hidden">
+    <div class="sidebar">
+      <h2>CodePsi</h2>
+      <nav>
+        <ul>
+          <li><button onclick="showSection('dashboard')">🏠 Dashboard</button></li>
+          <li><button onclick="showSection('patients')">👥 Pacientes</button></li>
+          <li><button onclick="showSection('consultar')">🔍 Consultar</button></li>
+        </ul>
+        <button onclick="toggleTheme()">🌗 Alternar Tema</button>
+      </nav>
+    </div>
 
-    <section class="dashboard" id="dashboard">
-      <h3>📊 Seu Painel</h3>
-      <div class="stats">
-        <div><strong>👥 Pacientes:</strong> <span id="countPatients">0</span></div>
-        <div><strong>🧾 Sessões:</strong> <span id="countSessions">0</span></div>
-        <div><strong>🏷️ Tags comuns:</strong> <span id="tagList">-</span></div>
-      </div>
-    </section>
+    <div class="content">
+      <header>
+        <h1 id="sectionTitle">Dashboard</h1>
+      </header>
 
-    <section class="patients">
-      <h3>Pacientes</h3>
-      <input type="text" id="searchPatient" placeholder="Buscar paciente..." oninput="filterPatients()">
-      <input type="text" id="newPatient" placeholder="Nome do paciente">
-      <button onclick="addPatient()">Adicionar</button>
-      <ul id="patientList"></ul>
-    </section>
+      <section id="dashboard" class="view-section">
+        <canvas id="sessionsChart" width="400" height="200"></canvas>
+      </section>
 
-    <section class="notes hidden" id="notesSection">
-      <h3 id="selectedPatientName"></h3>
-      <textarea id="notesArea" placeholder="Escreva suas anotações aqui..."></textarea>
-      <input type="text" id="tagsInput" placeholder="Adicionar tags separadas por vírgula (ex: ansiedade, infância)">
-      <input type="date" id="sessionDate">
-      <button onclick="saveNotes()">Salvar Anotações</button>
-      <div id="sessionHistory"></div>
-    </section>
+      <section id="patients" class="view-section hidden">
+        <form id="addPatientForm">
+          <input type="text" id="patientName" placeholder="Nome do paciente" required />
+          <input type="text" id="patientSexo" placeholder="Sexo" />
+          <input type="date" id="patientNascimento" placeholder="Data de nascimento" />
+          <input type="text" id="patientLocal" placeholder="Onde mora" />
+          <button type="submit">Adicionar paciente</button>
+        </form>
+
+        <ul id="patientList"></ul>
+
+        <div id="patientDetails" class="hidden">
+          <h2 id="selectedPatientName"></h2>
+          <p id="selectedPatientInfo"></p>
+          <form id="questionForm">
+            <input type="text" id="questionInput" placeholder="Pergunta do psicanalista" />
+            <textarea id="answerInput" placeholder="Resposta do paciente"></textarea>
+            <button type="submit">Adicionar</button>
+          </form>
+          <ul id="qaList"></ul>
+        </div>
+      </section>
+
+      <section id="consultar" class="view-section hidden">
+        <input type="text" id="searchInput" placeholder="Buscar paciente por nome..." />
+        <ul id="searchResults"></ul>
+      </section>
+    </div>
   </div>
 
   <script src="script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>

@@ -1,126 +1,174 @@
-let currentUser = "";
-let currentPatient = "";
+// script.js completo com todas as funções integradas e responsividade
 
-function enterApp() {
-  const username = document.getElementById("username").value.trim();
-  if (username) {
-    currentUser = username;
-    document.getElementById("userName").innerText = currentUser;
-    document.getElementById("loginScreen").classList.add("hidden");
-    document.getElementById("app").classList.remove("hidden");
+// ============ LOGIN ============
+const loginForm = document.getElementById("loginForm");
+const loginScreen = document.getElementById("loginScreen");
+const app = document.getElementById("app");
+
+loginForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const user = document.getElementById("username").value;
+  const pass = document.getElementById("password").value;
+  if (user && pass) {
+    loginScreen.classList.add("hidden");
+    app.classList.remove("hidden");
     loadPatients();
+    applySavedTheme();
+    renderChart();
   }
+});
+
+// ============ NAVEGAÇÃO ==========
+function showSection(id) {
+  document.querySelectorAll(".view-section").forEach((el) => el.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+  document.getElementById("sectionTitle").textContent =
+    id === "dashboard" ? "Dashboard" : id === "patients" ? "Pacientes" : "Consultar";
 }
 
-function logout() {
-  location.reload();
+// ============ TEMA ============
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+  localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
 }
 
-function addPatient() {
-  const patientName = document.getElementById("newPatient").value.trim();
-  if (!patientName) return;
-  let patients = getPatients();
-  if (!patients.includes(patientName)) {
-    patients.push(patientName);
-    savePatients(patients);
-    renderPatientList();
-    document.getElementById("newPatient").value = "";
-  }
+function applySavedTheme() {
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "dark") document.body.classList.add("dark");
 }
 
-function getPatients() {
-  return JSON.parse(localStorage.getItem(currentUser + "_patients") || "[]");
+// ============ PACIENTES ============
+const form = document.getElementById("addPatientForm");
+const list = document.getElementById("patientList");
+const patientDetails = document.getElementById("patientDetails");
+const selectedName = document.getElementById("selectedPatientName");
+const selectedInfo = document.getElementById("selectedPatientInfo");
+const qaList = document.getElementById("qaList");
+let currentPatient = null;
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = document.getElementById("patientName").value;
+  const sexo = document.getElementById("patientSexo").value;
+  const nascimento = document.getElementById("patientNascimento").value;
+  const local = document.getElementById("patientLocal").value;
+  const patient = { name, sexo, nascimento, local, qa: [] };
+  savePatient(patient);
+  form.reset();
+  loadPatients();
+});
+
+function savePatient(patient) {
+  const data = JSON.parse(localStorage.getItem("patients") || "[]");
+  data.push(patient);
+  localStorage.setItem("patients", JSON.stringify(data));
 }
 
-function savePatients(patients) {
-  localStorage.setItem(currentUser + "_patients", JSON.stringify(patients));
-}
-
-function renderPatientList() {
-  const list = document.getElementById("patientList");
+function loadPatients() {
   list.innerHTML = "";
-  getPatients().forEach(name => {
+  const data = JSON.parse(localStorage.getItem("patients") || "[]");
+  data.forEach((p, index) => {
     const li = document.createElement("li");
-    li.textContent = name;
-    li.onclick = () => openNotes(name);
+    li.textContent = p.name;
+    const del = document.createElement("button");
+    del.textContent = "🗑️";
+    del.style.fontSize = "0.8rem";
+    del.onclick = (event) => {
+      event.stopPropagation();
+      data.splice(index, 1);
+      localStorage.setItem("patients", JSON.stringify(data));
+      loadPatients();
+      patientDetails.classList.add("hidden");
+    };
+    li.onclick = () => selectPatient(index);
+    li.appendChild(del);
     list.appendChild(li);
   });
 }
 
-function openNotes(name) {
-  currentPatient = name;
-  document.getElementById("notesSection").classList.remove("hidden");
-  document.getElementById("selectedPatientName").innerText = "Paciente: " + name;
-  const notesKey = `${currentUser}_notes_${name}`;
-  const dateKey = `${currentUser}_dates_${name}`;
-  const tagKey = `${currentUser}_tags_${name}`;
-  document.getElementById("notesArea").value = localStorage.getItem(notesKey) || "";
-  document.getElementById("tagsInput").value = localStorage.getItem(tagKey) || "";
-  document.getElementById("sessionDate").value = "";
-  const dates = JSON.parse(localStorage.getItem(dateKey) || "[]");
-  document.getElementById("sessionHistory").innerHTML =
-    "<strong>Sessões:</strong><br>" + dates.map(d => `🗓️ ${d}`).join("<br>");
+function selectPatient(index) {
+  const data = JSON.parse(localStorage.getItem("patients") || "[]");
+  currentPatient = index;
+  const p = data[index];
+  selectedName.textContent = p.name;
+  selectedInfo.textContent = `${p.sexo} • ${p.nascimento} • ${p.local}`;
+  renderQA(p.qa);
+  patientDetails.classList.remove("hidden");
 }
 
-function saveNotes() {
-  const content = document.getElementById("notesArea").value;
-  const sessionDate = document.getElementById("sessionDate").value;
-  const tags = document.getElementById("tagsInput").value;
-  const notesKey = `${currentUser}_notes_${currentPatient}`;
-  const dateKey = `${currentUser}_dates_${currentPatient}`;
-  const tagKey = `${currentUser}_tags_${currentPatient}`;
-  localStorage.setItem(notesKey, content);
-  if (tags) localStorage.setItem(tagKey, tags);
-  if (sessionDate) {
-    let dates = JSON.parse(localStorage.getItem(dateKey) || "[]");
-    if (!dates.includes(sessionDate)) {
-      dates.push(sessionDate);
-      localStorage.setItem(dateKey, JSON.stringify(dates));
-    }
+// ============ Q&A ============
+document.getElementById("questionForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const q = document.getElementById("questionInput").value;
+  const a = document.getElementById("answerInput").value;
+  const data = JSON.parse(localStorage.getItem("patients") || "[]");
+  if (currentPatient !== null && q && a) {
+    data[currentPatient].qa.push({ q, a });
+    localStorage.setItem("patients", JSON.stringify(data));
+    renderQA(data[currentPatient].qa);
+    document.getElementById("questionForm").reset();
   }
-  alert("Anotações e sessão salvas!");
-  openNotes(currentPatient);
-  updateDashboard();
-}
+});
 
-function loadPatients() {
-  renderPatientList();
-  updateDashboard();
-}
-
-function filterPatients() {
-  const search = document.getElementById("searchPatient").value.toLowerCase();
-  const items = document.querySelectorAll("#patientList li");
-  items.forEach(item => {
-    item.style.display = item.textContent.toLowerCase().includes(search) ? "" : "none";
+function renderQA(qa) {
+  qaList.innerHTML = "";
+  qa.forEach((item, index) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<strong>${item.q}</strong><br/>${item.a}`;
+    const del = document.createElement("button");
+    del.textContent = "🗑️";
+    del.style.marginLeft = "1rem";
+    del.onclick = () => {
+      qa.splice(index, 1);
+      const data = JSON.parse(localStorage.getItem("patients") || "[]");
+      data[currentPatient].qa = qa;
+      localStorage.setItem("patients", JSON.stringify(data));
+      renderQA(qa);
+    };
+    li.appendChild(del);
+    qaList.appendChild(li);
   });
 }
 
-function toggleTheme() {
-  document.body.classList.toggle("dark");
-}
+// ============ CONSULTAR ============
+document.getElementById("searchInput").addEventListener("input", function () {
+  const term = this.value.toLowerCase();
+  const data = JSON.parse(localStorage.getItem("patients") || "[]");
+  const results = data.filter((p) => p.name.toLowerCase().includes(term));
+  const ul = document.getElementById("searchResults");
+  ul.innerHTML = "";
+  results.forEach((p) => {
+    const li = document.createElement("li");
+    li.textContent = `${p.name} • ${p.sexo} • ${p.local}`;
+    ul.appendChild(li);
+  });
+});
 
-function updateDashboard() {
-  const patients = getPatients();
-  document.getElementById("countPatients").innerText = patients.length;
-  let sessionCount = 0;
-  let tagBank = [];
-  patients.forEach(name => {
-    const dateKey = `${currentUser}_dates_${name}`;
-    const tagKey = `${currentUser}_tags_${name}`;
-    const sessions = JSON.parse(localStorage.getItem(dateKey) || "[]");
-    const tags = (localStorage.getItem(tagKey) || "").split(",").map(t => t.trim());
-    sessionCount += sessions.length;
-    tagBank.push(...tags);
+// ============ DASHBOARD ============
+function renderChart() {
+  const data = JSON.parse(localStorage.getItem("patients") || "[]");
+  const ctx = document.getElementById("sessionsChart").getContext("2d");
+  const sessionCounts = data.map((p) => p.qa.length);
+  const labels = data.map((p) => p.name);
+
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Sessões por paciente",
+          data: sessionCounts,
+          backgroundColor: "#4e5dff"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
   });
-  document.getElementById("countSessions").innerText = sessionCount;
-  const freq = {};
-  tagBank.forEach(tag => {
-    if (tag) freq[tag] = (freq[tag] || 0) + 1;
-  });
-  const sortedTags = Object.entries(freq)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([tag, count]) => `${tag} (${count})`);
-  document.getElementById("tagList").innerText = sortedTags.length ? sortedTags.join(", ") : "-";
 }
